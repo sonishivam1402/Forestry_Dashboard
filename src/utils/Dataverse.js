@@ -41,3 +41,20 @@ export const fetchServiceReq = async () => {
     throw error;
   }
 };
+
+// Function to update SR data in Dataverse via the backend server
+export const updateSR = async (requestId, data) => {
+  try {
+    console.log(`Updating SR data for ID: ${requestId}`, data);
+
+    const response = await axios.patch(`http://localhost:3001/api/srdata/${requestId}`, data, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    console.log('Update SR response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error in updateSR:', error.response?.data || error.message);
+    throw new Error(`Failed to update SR data: ${error.message}`);
+  }
+};

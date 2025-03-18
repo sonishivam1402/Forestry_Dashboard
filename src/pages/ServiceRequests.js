@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Button, Grid, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, TextField, Button, Grid, CircularProgress, Dialog, DialogTitle,
+  DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { 
   PieChart, Pie, Cell, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend 
 } from 'recharts';
-import {fetchServiceReq} from '../utils/Dataverse'; 
+import {fetchServiceReq, updateSR} from '../utils/Dataverse'; 
+import EditIcon from '@mui/icons-material/Edit';
 
 const columnsBase = [
   { field: 'cr36d_objectid', headerName: 'Request ID', width: 100 },
@@ -32,6 +34,14 @@ const ServiceRequests = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [boroughStats, setBoroughStats] = useState([]);
   const [requestTypeStats, setRequestTypeStats] = useState([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   const processData = (data) => {
     // Calculate borough statistics
@@ -118,7 +128,79 @@ const ServiceRequests = () => {
 
   const columns = [
     ...columnsBase,
-  ]
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 150,
+      renderCell: (params) => (
+        <>
+          <Button size="small" onClick={() => handleEdit(params.row)}>
+            <EditIcon color="primary" />
+          </Button>
+        </>
+      )
+    }
+  ];
+
+  const handleEdit = (row) => {
+    setSelectedRequest(row);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    setUpdateLoading(true);
+    try {
+      if (!selectedRequest.cr36d_objectid) {
+        throw new Error('Service Request ID not found');
+      }
+
+      console.log(`Updating SR data for ID: ${selectedRequest.cr36d_objectid}`, selectedRequest);
+
+      // Prepare data to update
+      const dataToUpdate = {
+        cr36d_locationdetails: selectedRequest.cr36d_locationdetails,
+        cr36d_servicerequestresolution: selectedRequest.cr36d_servicerequestresolution,
+        cr36d_servicerequesttype: selectedRequest.cr36d_servicerequesttype,
+        cr36d_notestocustomer: selectedRequest.cr36d_notestocustomer,
+        cr36d_crossstreet1: selectedRequest.cr36d_crossstreet1,
+        cr36d_servicerequestsource: selectedRequest.cr36d_servicerequestsource,
+        cr36d_boroughcode: selectedRequest.cr36d_boroughcode,
+        cr36d_descriptor1: selectedRequest.cr36d_descriptor1,
+        cr36d_streetname: selectedRequest.cr36d_streetname,
+        cr36d_geometry: selectedRequest.cr36d_geometry,
+        cr36d_complainttype: selectedRequest.cr36d_complainttype,
+        cr36d_crossstreet2: selectedRequest.cr36d_crossstreet2,
+        cr36d_complaintnumber: selectedRequest.cr36d_complaintnumber,
+        cr36d_complaintdetails: selectedRequest.cr36d_complaintdetails,
+        createdon: selectedRequest.createdon,
+        cr36d_buildingnumber: selectedRequest.cr36d_buildingnumber,
+      };
+
+      await updateSR(selectedRequest.cr36d_servicerequestrecordid, dataToUpdate);
+
+      setRequests(requests.map(req => (req.cr36d_objectid === selectedRequest.cr36d_objectid ? { ...req, ...dataToUpdate } : req)));
+      setEditModalOpen(false);
+
+      setSnackbar({
+        open: true,
+        message: 'Service Request updated successfully',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error updating SR data:', error);
+      setSnackbar({
+        open: true,
+        message: `Error updating request: ${error.message}`,
+        severity: 'error',
+      });
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({...snackbar, open: false});
+  };
 
   if (error) {
     return (
@@ -235,6 +317,155 @@ const ServiceRequests = () => {
           />
         )}
       </Paper>
+
+      {/* Edit Dialog */}
+      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+        <DialogTitle>Edit Service Request</DialogTitle>
+        <DialogContent>
+          {selectedRequest && (
+            <>
+              <TextField
+                fullWidth
+                label="Location Details"
+                value={selectedRequest.cr36d_locationdetails || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_locationdetails: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Service Request Resolution"
+                value={selectedRequest.cr36d_servicerequestresolution || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestresolution: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Service Request Type"
+                value={selectedRequest.cr36d_servicerequesttype || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequesttype: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Notes to Customer"
+                value={selectedRequest.cr36d_notestocustomer || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_notestocustomer: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Cross Street 1"
+                value={selectedRequest.cr36d_crossstreet1 || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_crossstreet1: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Service Request Source"
+                value={selectedRequest.cr36d_servicerequestsource || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestsource: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Borough Code"
+                value={selectedRequest.cr36d_boroughcode || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_boroughcode: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Description"
+                value={selectedRequest.cr36d_descriptor1 || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_descriptor1: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Street Name"
+                value={selectedRequest.cr36d_streetname || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_streetname: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Geometry"
+                value={selectedRequest.cr36d_geometry || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_geometry: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Complaint Type"
+                value={selectedRequest.cr36d_complainttype || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complainttype: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Cross Street 2"
+                value={selectedRequest.cr36d_crossstreet2 || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_crossstreet2: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Complaint Number"
+                value={selectedRequest.cr36d_complaintnumber || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complaintnumber: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Complaint Details"
+                value={selectedRequest.cr36d_complaintdetails || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complaintdetails: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Created On"
+                value={selectedRequest.createdon || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, createdon: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Building Number"
+                value={selectedRequest.cr36d_buildingnumber || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_buildingnumber: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleSaveEdit} 
+            color="primary"
+            disabled={updateLoading}
+          >
+            {updateLoading ? <CircularProgress size={24} /> : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

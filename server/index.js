@@ -92,3 +92,33 @@ app.get('/api/srdata', async (req, res) => {
     res.status(500).send('Error fetching data');
   }
 });
+
+// Endpoint for updating SR
+app.patch('/api/srdata/:id', async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const requestId = req.params.id;
+
+    console.log(`Updating record with ID: ${requestId}`);
+
+    // Directly update using the provided ID
+    const response = await axios.patch(
+      `${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestrecords(${requestId})`,
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'OData-Version': '4.0',
+          'If-Match': '*',
+        },
+      }
+    );
+
+    console.log('Update SR successful');
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error updating SR data:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).send(error.response?.data || 'Internal Server Error');
+  }
+});
