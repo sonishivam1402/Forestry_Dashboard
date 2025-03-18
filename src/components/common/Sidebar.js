@@ -18,6 +18,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import ParkIcon from '@mui/icons-material/Park';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import NewRequestsIcon from '@mui/icons-material/AddAlert';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
 
 const drawerWidth = 240;
 
@@ -31,7 +32,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Storm Inspections', icon: <AssignmentIcon />, path: '/storm-inspections' },
+  { text: 'Storm Inspections', icon: <ThunderstormIcon />, path: '/storm-inspections' },
   { text: 'Service Requests', icon: <AssignmentIcon />, path: '/service-requests' },
   { text: 'New Requests', icon: <NewRequestsIcon />, path: '/new-requests' },
   { text: 'Work Orders', icon: <WorkIcon />, path: '/work-orders' },
