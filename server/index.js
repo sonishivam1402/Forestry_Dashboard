@@ -23,6 +23,7 @@ const getAccessToken = async () => {
   return response.data.access_token;
 };
 
+// storm data
 app.get('/api/data', async (req, res) => {
   try {
     const token = await getAccessToken();
@@ -72,4 +73,22 @@ app.patch('/api/data/:id', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+});
+
+// service request
+app.get('/api/srdata', async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestrecords?$orderby=cr36d_objectid desc&$top=10`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'OData-Version': '4.0',
+      },
+    });
+    res.json(response.data.value);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching data');
+  }
 });

@@ -6,27 +6,20 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend 
 } from 'recharts';
+import {fetchServiceReq} from '../utils/Dataverse'; 
 
-const columns = [
-  { field: 'complaintnumber', headerName: 'Request ID', width: 150 },
+const columnsBase = [
+  { field: 'cr36d_objectid', headerName: 'Request ID', width: 100 },
+  { field: 'cr36d_servicerequesttype', headerName: 'Request Type', width: 200 },
+  { field: 'cr36d_complainttype', headerName: 'Complaint Type', width: 200 },
+  { field: 'cr36d_descriptor1', headerName: 'Description', width: 200 },
   { 
-    field: 'location', 
-    headerName: 'Location', 
-    width: 250,
-    valueGetter: (params) => 
-      `${params.row.buildingnumber} ${params.row.streetname}, ${params.row.boroughcode}`
-  },
-  { field: 'srtype', headerName: 'Request Type', width: 180 },
-  { field: 'srstatus', headerName: 'Status', width: 130 },
-  { field: 'srpriority', headerName: 'Priority', width: 130 },
-  { 
-    field: 'createddate', 
+    field: 'cr36d_createddate', 
     headerName: 'Date Submitted', 
-    width: 180,
+    width: 110,
     valueFormatter: (params) => new Date(params.value).toLocaleDateString()
   },
-  { field: 'complaintdetails', headerName: 'Details', width: 300 },
-  { field: 'srresolution', headerName: 'Resolution', width: 200 }
+  { field: 'cr36d_boroughcode', headerName: 'Borough', width: 110 }
 ];
 
 // Colors for charts
@@ -40,62 +33,75 @@ const ServiceRequests = () => {
   const [boroughStats, setBoroughStats] = useState([]);
   const [requestTypeStats, setRequestTypeStats] = useState([]);
 
+  const processData = (data) => {
+    // Calculate borough statistics
+    const boroughCount = data.reduce((acc, request) => {
+      const borough = request.cr36d_boroughcode || 'Unknown';
+      acc[borough] = (acc[borough] || 0) + 1; 
+      return acc;
+    }, {});
+
+    const boroughData = Object.entries(boroughCount).map(([name, value]) => ({
+      name,
+      value
+    }));
+
+    // Calculate request type statistics
+    const typeCount = data.reduce((acc, request) => {
+      const type = request.cr36d_complainttype || 'Unknown';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {});
+
+    const typeData = Object.entries(typeCount)
+      .map(([name, count]) => ({
+        name,
+        count
+      }))
+      .sort((a, b) => b.count - a.count) // Sort by count in descending order
+      .slice(0, 10); // Take top 10 request types
+
+    setBoroughStats(boroughData);
+    setRequestTypeStats(typeData);
+  };
+
+
   useEffect(() => {
-    fetchServiceRequests();
+    const fetchSR = async () => {
+      try {
+        console.log('Fetching SR data from Dataverse API...');
+        const dataverseData = await fetchServiceReq();
+        console.log('SR Data', dataverseData);
+        if (dataverseData) {
+          const processedData = dataverseData.map((item) => ({
+            ...item,
+            id: item.cr36d_objectid 
+          }));
+          
+          setRequests(processedData);
+          
+          // Process data for charts AFTER we have the data
+          processData(processedData);
+        }
+      } catch (error) {
+        console.error('Error SR fetching Dataverse data:', error);
+        setError('Failed to fetch SR Dataverse data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSR();
   }, []);
 
-  const fetchServiceRequests = async () => {
-    try {
-      const response = await fetch('https://data.cityofnewyork.us/resource/mu46-p9is.json?$limit=77');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch service requests');
-      }
-      const data = await response.json();
-      
-      const processedData = data.map(request => ({
-        ...request,
-        id: request.objectid
-      }));
-      
-      setRequests(processedData);
-
-      // Calculate borough statistics
-      const boroughCount = data.reduce((acc, request) => {
-        const borough = request.boroughcode || 'Unknown';
-        acc[borough] = (acc[borough] || 0) + 1;
-        return acc;
-      }, {});
-
-      const boroughData = Object.entries(boroughCount).map(([name, value]) => ({
-        name,
-        value
-      }));
-
-      // Calculate request type statistics
-      const typeCount = data.reduce((acc, request) => {
-        const type = request.srtype || 'Unknown';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {});
-
-      const typeData = Object.entries(typeCount)
-        .map(([name, count]) => ({
-          name,
-          count
-        }))
-        .sort((a, b) => b.count - a.count) // Sort by count in descending order
-        .slice(0, 10); // Take top 10 request types
-
-      setBoroughStats(boroughData);
-      setRequestTypeStats(typeData);
-      setLoading(false);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError(`Error fetching data: ${err.message}`);
-      setLoading(false);
+  // This effect will run whenever the requests state changes
+  useEffect(() => {
+    if (requests.length > 0) {
+      processData(requests);
     }
-  };
+  }, [requests]);
+
+  
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -104,12 +110,15 @@ const ServiceRequests = () => {
   const filteredRequests = requests.filter(request => {
     const searchString = searchTerm.toLowerCase();
     return (
-      request.complaintnumber?.toLowerCase().includes(searchString) ||
-      request.srtype?.toLowerCase().includes(searchString) ||
-      request.complaintdetails?.toLowerCase().includes(searchString) ||
-      `${request.buildingnumber} ${request.streetname}`.toLowerCase().includes(searchString)
+      request.cr36d_objectid ||
+      request.cr36d_boroughcode?.toLowerCase().includes(searchString) ||
+      request.cr36d_complainttype?.toLowerCase().includes(searchString)
     );
   });
+
+  const columns = [
+    ...columnsBase,
+  ]
 
   if (error) {
     return (
@@ -159,7 +168,7 @@ const ServiceRequests = () => {
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Top Request Types
+              By Complaint Types
             </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
