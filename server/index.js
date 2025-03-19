@@ -122,3 +122,52 @@ app.patch('/api/srdata/:id', async (req, res) => {
     res.status(error.response?.status || 500).send(error.response?.data || 'Internal Server Error');
   }
 });
+
+
+// Workk Order
+app.get('/api/wodata', async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_workorderrecords?$orderby=cr36d_workorderid desc&$top=50`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'OData-Version': '4.0',
+      },
+    });
+    res.json(response.data.value);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching data');
+  }
+});
+
+// Endpoint for updating WO
+app.patch('/api/wodata/:id', async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const requestId = req.params.id;
+
+    console.log(`Updating WO record with ID: ${requestId}`);
+
+    // Directly update using the provided ID
+    const response = await axios.patch(
+      `${dynamicsUrl}/api/data/v9.2/cr36d_workorderrecords(${requestId})`,
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'OData-Version': '4.0',
+          'If-Match': '*',
+        },
+      }
+    );
+
+    console.log('Update WO successful');
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error updating WO data:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).send(error.response?.data || 'Internal Server Error');
+  }
+});
