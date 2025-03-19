@@ -50,9 +50,9 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/storm-inspections" element={<StormInspection />} />
               <Route path="/service-requests" element={<ServiceRequests />} />
-              <Route path="/new-requests" element={<NewServiceRequests />} />
+              {/* <Route path="/new-requests" element={<NewServiceRequests />} /> */}
               <Route path="/work-orders" element={<WorkOrders />} />
-              <Route path="/plantation" element={<Plantation />} />
+              {/* <Route path="/plantation" element={<Plantation />} /> */}
               <Route path="/ai-recommendations" element={<AIRecommendations />} />
             </Routes>
           </Suspense>

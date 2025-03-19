@@ -34,9 +34,9 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Storm Inspections', icon: <ThunderstormIcon />, path: '/storm-inspections' },
   { text: 'Service Requests', icon: <AssignmentIcon />, path: '/service-requests' },
-  { text: 'New Requests', icon: <NewRequestsIcon />, path: '/new-requests' },
+  // { text: 'New Requests', icon: <NewRequestsIcon />, path: '/new-requests' },
   { text: 'Work Orders', icon: <WorkIcon />, path: '/work-orders' },
-  { text: 'Plantation', icon: <ParkIcon />, path: '/plantation' },
+  // { text: 'Plantation', icon: <ParkIcon />, path: '/plantation' },
   { text: 'AI Recommendations', icon: <SmartToyIcon />, path: '/ai-recommendations' },
 ];
 
