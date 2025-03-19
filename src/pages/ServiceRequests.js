@@ -11,10 +11,10 @@ import {fetchServiceReq, updateSR} from '../utils/Dataverse';
 import EditIcon from '@mui/icons-material/Edit';
 
 const columnsBase = [
-  { field: 'cr36d_objectid', headerName: 'Request ID', width: 100 },
+  { field: 'cr36d_servicerequestid', headerName: 'Request ID', width: 150 },
   { field: 'cr36d_servicerequesttype', headerName: 'Request Type', width: 200 },
   { field: 'cr36d_complainttype', headerName: 'Complaint Type', width: 200 },
-  { field: 'cr36d_descriptor1', headerName: 'Description', width: 200 },
+  { field: 'cr36d_servicerequeststatus', headerName: 'Status', width: 150 },
   { 
     field: 'cr36d_createddate', 
     headerName: 'Date Submitted', 
@@ -46,7 +46,7 @@ const ServiceRequests = () => {
   const processData = (data) => {
     // Calculate borough statistics
     const boroughCount = data.reduce((acc, request) => {
-      const borough = request.cr36d_boroughcode || 'Unknown';
+      const borough = request.cr36d_servicerequeststatus || 'Unknown';
       acc[borough] = (acc[borough] || 0) + 1; 
       return acc;
     }, {});
@@ -58,7 +58,7 @@ const ServiceRequests = () => {
 
     // Calculate request type statistics
     const typeCount = data.reduce((acc, request) => {
-      const type = request.cr36d_complainttype || 'Unknown';
+      const type = request.cr36d_boroughcode || 'Unknown';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
@@ -120,7 +120,7 @@ const ServiceRequests = () => {
   const filteredRequests = requests.filter(request => {
     const searchString = searchTerm.toLowerCase();
     return (
-      request.cr36d_objectid ||
+      request.cr36d_servicerequestid?.toLowerCase().includes(searchString) ||
       request.cr36d_boroughcode?.toLowerCase().includes(searchString) ||
       request.cr36d_complainttype?.toLowerCase().includes(searchString)
     );
@@ -154,7 +154,7 @@ const ServiceRequests = () => {
         throw new Error('Service Request ID not found');
       }
 
-      console.log(`Updating SR data for ID: ${selectedRequest.cr36d_objectid}`, selectedRequest);
+      console.log(`Updating SR data for ID: ${selectedRequest.cr36d_servicerequestsrecordid}`, selectedRequest);
 
       // Prepare data to update
       const dataToUpdate = {
@@ -176,7 +176,7 @@ const ServiceRequests = () => {
         cr36d_buildingnumber: selectedRequest.cr36d_buildingnumber,
       };
 
-      await updateSR(selectedRequest.cr36d_servicerequestrecordid, dataToUpdate);
+      await updateSR(selectedRequest.cr36d_servicerequestsrecordid, dataToUpdate);
 
       setRequests(requests.map(req => (req.cr36d_objectid === selectedRequest.cr36d_objectid ? { ...req, ...dataToUpdate } : req)));
       setEditModalOpen(false);
@@ -220,7 +220,7 @@ const ServiceRequests = () => {
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Requests by Borough
+              By Status
             </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -250,7 +250,7 @@ const ServiceRequests = () => {
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              By Complaint Types
+              By Borough
             </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -324,18 +324,19 @@ const ServiceRequests = () => {
         <DialogContent>
           {selectedRequest && (
             <>
-              <TextField
+            <TextField
                 fullWidth
-                label="Location Details"
-                value={selectedRequest.cr36d_locationdetails || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_locationdetails: e.target.value })}
-                sx={{ mb: 2 }}
+                label="Service Request Id"
+                value={selectedRequest.cr36d_servicerequestid || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestid: e.target.value })}
+                sx={{ mb: 2, mt:2 }}
+                disabled="true"
               />
               <TextField
                 fullWidth
-                label="Service Request Resolution"
-                value={selectedRequest.cr36d_servicerequestresolution || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestresolution: e.target.value })}
+                label="Service Request Status"
+                value={selectedRequest.cr36d_servicerequeststatus || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequeststatus: e.target.value })}
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -347,23 +348,16 @@ const ServiceRequests = () => {
               />
               <TextField
                 fullWidth
-                label="Notes to Customer"
-                value={selectedRequest.cr36d_notestocustomer || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_notestocustomer: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Cross Street 1"
-                value={selectedRequest.cr36d_crossstreet1 || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_crossstreet1: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
                 label="Service Request Source"
                 value={selectedRequest.cr36d_servicerequestsource || ''}
                 onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestsource: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Complaint Details"
+                value={selectedRequest.cr36d_complaintdetails || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complaintdetails: e.target.value })}
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -375,9 +369,9 @@ const ServiceRequests = () => {
               />
               <TextField
                 fullWidth
-                label="Description"
-                value={selectedRequest.cr36d_descriptor1 || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_descriptor1: e.target.value })}
+                label="Created On"
+                value={new Date(selectedRequest.cr36d_createddate).toLocaleDateString() || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_createddate: e.target.value })}
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -403,37 +397,24 @@ const ServiceRequests = () => {
               />
               <TextField
                 fullWidth
-                label="Cross Street 2"
-                value={selectedRequest.cr36d_crossstreet2 || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_crossstreet2: e.target.value })}
+                label="Location Details"
+                value={selectedRequest.cr36d_locationdetails || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_locationdetails: e.target.value })}
                 sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
-                label="Complaint Number"
-                value={selectedRequest.cr36d_complaintnumber || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complaintnumber: e.target.value })}
+                label="Service Request Resolution"
+                value={selectedRequest.cr36d_servicerequestresolution || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_servicerequestresolution: e.target.value })}
                 sx={{ mb: 2 }}
               />
+              
               <TextField
                 fullWidth
-                label="Complaint Details"
-                value={selectedRequest.cr36d_complaintdetails || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_complaintdetails: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Created On"
-                value={selectedRequest.createdon || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, createdon: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Building Number"
-                value={selectedRequest.cr36d_buildingnumber || ''}
-                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_buildingnumber: e.target.value })}
+                label="Notes to Customer"
+                value={selectedRequest.cr36d_notestocustomer || ''}
+                onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_notestocustomer: e.target.value })}
                 sx={{ mb: 2 }}
               />
             </>

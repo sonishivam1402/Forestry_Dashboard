@@ -79,7 +79,7 @@ app.listen(port, () => {
 app.get('/api/srdata', async (req, res) => {
   try {
     const token = await getAccessToken();
-    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestrecords?$orderby=cr36d_objectid desc&$top=10`, {
+    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestsrecords?$orderby=cr36d_servicerequestid desc&$top=50`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ app.patch('/api/srdata/:id', async (req, res) => {
 
     // Directly update using the provided ID
     const response = await axios.patch(
-      `${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestrecords(${requestId})`,
+      `${dynamicsUrl}/api/data/v9.2/cr36d_servicerequestsrecords(${requestId})`,
       req.body,
       {
         headers: {

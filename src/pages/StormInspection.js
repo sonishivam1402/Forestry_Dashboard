@@ -18,9 +18,14 @@ const columnsBase = [
     headerName: 'Park Location', 
     width: 210,
   },
-  { field: 'cr36d_numberoffallentrees', headerName: 'Fallen Trees', width: 100 },
-  { field: 'cr36d_havepowerlinesfallen', headerName: 'Electric Damage', width: 120 },
-  { field: 'cr36d_inspectionrequestedby', headerName: 'Inspection Requested By', width: 240 },
+  { field: 'cr36d_inspectionstatus', headerName: 'Status', width: 120 },
+  { field: 'cr36d_typeofstormevent', headerName: 'Type of Storm', width: 180 },
+  { 
+    field: 'cr36d_havepowerlinesfallen', 
+    headerName: 'Electric Damage', 
+    width: 120,
+    valueFormatter: (params) => params.value ? 'Yes' : 'No'
+  },
   { 
     field: 'createdon', 
     headerName: 'Date Submitted', 
