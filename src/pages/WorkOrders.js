@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Grid,Button, CircularProgress, Dialog, DialogTitle,
-  DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
+  DialogContent, DialogActions, Snackbar, Alert, MenuItem, Select } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchWO, updateWO } from '../utils/Dataverse'; 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+const statusOptions = [
+  { value: 0, label: 'In Progress' },
+  { value: 1, label: 'Pending' },
+  { value: 2, label: 'Closed' },
+  { value: 3, label: 'Open' },
+];
+
 const columnsBase = [
   { field: 'cr36d_workorderid', headerName: 'Work Order ID', width: 180 },
   { field: 'cr36d_workordertype', headerName: 'Work Type', width: 180 },
-  { field: 'cr36d_workorderstatus', headerName: 'Status', width: 130 },
+  { field: 'cr36d_workorderstatus', headerName: 'Status', width: 130, 
+    valueFormatter: (params) => {
+      const status = statusOptions.find(option => option.value === params.value);
+      return status ? status.label : 'Unknown';
+    }
+  },
   { field: 'cr36d_boroughcode', headerName: 'Borough', width: 130 },
   { 
     field: 'cr36d_createddate', 
@@ -264,10 +276,17 @@ const WorkOrders = () => {
               <TextField
                 fullWidth
                 label="Status"
+                select
                 value={selectedRequest.cr36d_workorderstatus || ''}
                 onChange={(e) => setSelectedRequest({ ...selectedRequest, cr36d_workorderstatus: e.target.value })}
                 sx={{ mb: 2 }}
-              />
+              >
+                {statusOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 fullWidth
                 label="Borough Code"
