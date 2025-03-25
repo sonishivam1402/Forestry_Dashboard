@@ -128,7 +128,7 @@ app.patch('/api/srdata/:id', async (req, res) => {
 app.get('/api/wodata', async (req, res) => {
   try {
     const token = await getAccessToken();
-    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_workorderrecords?$orderby=cr36d_workorderid desc&$top=50`, {
+    const response = await axios.get(`${dynamicsUrl}/api/data/v9.2/cr36d_workorderrecord1s?$orderby=cr36d_workorderid desc&$top=50`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
